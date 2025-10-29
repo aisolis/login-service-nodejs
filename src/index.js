@@ -1,32 +1,26 @@
 import 'dotenv/config';
 import express from 'express';
-import { sequelize } from './models/index.js';
-import authRouter from './routes/auth.js';
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
 
-// Healthcheck
+// Healthcheck (no DB required)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Routes
-app.use('/', authRouter);
-
-(async () => {
+// Routes (lazy-load to avoid DB/dialect loading at cold start)
+app.use('/', async (req, res, next) => {
   try {
-    await sequelize.authenticate();
-    if (process.env.DB_SYNC === 'true') {
-      await sequelize.sync();
-    }
-    console.log('Database initialized');
+    const { default: authRouter } = await import('./routes/auth.js');
+    return authRouter(req, res, next);
   } catch (err) {
-    console.error('Database init error (continuing):', err);
+    console.error('Failed to load router:', err);
+    return res.status(500).json({ error: 'Router load failure' });
   }
-})();
+});
 
-
+// 🚫 No usar app.listen aquí (Vercel maneja el servidor)
 export default app;
