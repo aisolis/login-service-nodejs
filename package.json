@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "build": "esbuild src/index.js --bundle --platform=node --format=esm --outdir=dist --sourcemap",
     "start:prod": "node dist/index.js",
     "test": "echo \"No tests yet\""
   },
